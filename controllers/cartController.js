@@ -1,12 +1,18 @@
 import userModel from "../models/userModel.js"
 
-//adding to cart function
+// ================= ADD TO CART =================
 const addToCart = async (req,res)=>{
     try {
+
         const {userId, itemId, size} = req.body
 
         const userData = await userModel.findById(userId)
-        const cartData = await userData.cartData; 
+
+        if(!userData){
+            return res.json({success:false, message:"User not found"})
+        }
+
+        let cartData = userData.cartData || {}
 
         if(cartData[itemId]){
             if(cartData[itemId][size]){
@@ -14,51 +20,71 @@ const addToCart = async (req,res)=>{
             }else{
                 cartData[itemId][size] = 1
             }
-        } else{
+        }else{
             cartData[itemId] = {}
-                cartData[itemId][size] = 1    
+            cartData[itemId][size] = 1
         }
-        await userModel.findByIdAndUpdate(userId, {cartData})
-        res.json({success:true, message: "Add to Cart"})
+
+        await userModel.findByIdAndUpdate(userId,{cartData})
+
+        res.json({success:true,message:"Added To Cart"})
+
     } catch (error) {
         console.log(error)
-        res.json({success:false, message:error.message})
-        
+        res.json({success:false,message:error.message})
     }
 }
 
-//Updating from cart function
+
+// ================= UPDATE CART =================
 const updateCart = async (req,res)=>{
-   try {
-    const {userId, itemId, size, quantity} = req.body
+    try {
 
-    const userData = await userModel.findById(userId)
-    const cartData = await userData.cartData;
+        const {userId,itemId,size,quantity} = req.body
 
-    cartData[itemId][size] = quantity
-    await userModel.findByIdAndUpdate(userId, {cartData})
-    res.json({success:true,message: "Cart Updated"})
-   } catch (error) {
-      console.log(error);
-      res.json({success:false, message:error.message})
-   }
+        const userData = await userModel.findById(userId)
+
+        if(!userData){
+            return res.json({success:false,message:"User not found"})
+        }
+
+        let cartData = userData.cartData || {}
+
+        if(cartData[itemId] && cartData[itemId][size] !== undefined){
+            cartData[itemId][size] = quantity
+        }
+
+        await userModel.findByIdAndUpdate(userId,{cartData})
+
+        res.json({success:true,message:"Cart Updated"})
+
+    } catch (error) {
+        console.log(error)
+        res.json({success:false,message:error.message})
+    }
 }
 
-//Getting userCart function
+
+// ================= GET USER CART =================
 const getUserCart = async (req,res)=>{
     try {
-        
-    const {userId} = req.body
 
-    const userData = await userModel.findById(userId)
-    const cartData = await userData.cartData;
+        const {userId} = req.body
 
-    res.json({success:true, cartData})
-} catch (error) {
-    console.log(error);
-    res.json({success:false, message:error.message})
-        
- }
+        const userData = await userModel.findById(userId)
+
+        if(!userData){
+            return res.json({success:false,message:"User not found"})
+        }
+
+        const cartData = userData.cartData || {}
+
+        res.json({success:true,cartData})
+
+    } catch (error) {
+        console.log(error)
+        res.json({success:false,message:error.message})
+    }
 }
 
 export {addToCart, updateCart, getUserCart}
